@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="誰是間諜 — 多人線上派對遊戲，3～8人一起玩！找出隱藏在你身邊的間諜。">
+  <title>誰是間諜 | Who is the Spy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+</head>
+<body>
+  <!-- ═══ 載入遮罩 ═══ -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p id="loading-text">載入中...</p>
+  </div>
+
+  <!-- ═══ Toast 通知 ═══ -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- ═══ 固定工具列 ═══ -->
+  <div class="toolbar">
+    <button id="btn-chat-toggle" class="toolbar-btn" title="聊天">
+      💬
+      <span id="chat-badge" class="badge"></span>
+    </button>
+    <button id="btn-mute" class="toolbar-btn" title="麥克風">🎤</button>
+    <button id="btn-settings" class="toolbar-btn" title="設定">⚙️</button>
+  </div>
+
+  <!-- ═══ 聊天面板 ═══ -->
+  <div id="chat-panel" class="chat-panel">
+    <div class="chat-header">
+      <h3>💬 聊天室</h3>
+    </div>
+    <div id="chat-messages" class="chat-messages"></div>
+    <div class="chat-input-bar">
+      <input type="text" id="chat-input" placeholder="輸入訊息..." maxlength="200" autocomplete="off">
+      <button id="btn-chat-send">送出</button>
+    </div>
+  </div>
+
+  <!-- ═══ 設定面板 ═══ -->
+  <div id="settings-panel" class="settings-panel">
+    <h3>⚙️ 音訊設定</h3>
+    <div class="setting-row">
+      <label>🎤 麥克風音量</label>
+      <input type="range" id="slider-mic" min="0" max="100" value="100">
+    </div>
+    <div class="setting-row">
+      <label>🔊 喇叭音量</label>
+      <input type="range" id="slider-speaker" min="0" max="100" value="80">
+    </div>
+    <div class="setting-row">
+      <label>🔔 音效音量</label>
+      <input type="range" id="slider-sfx" min="0" max="100" value="50">
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- 首頁 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-home" class="screen active">
+    <div class="container home-container">
+      <div class="logo-area">
+        <div class="logo-icon">🕵️</div>
+        <h1 class="game-title">誰是間諜</h1>
+        <p class="game-subtitle">Who is the Spy?</p>
+        <p class="game-desc">3～8 人線上推理派對遊戲</p>
+      </div>
+
+      <div class="home-actions">
+        <div class="action-card create-card">
+          <h2>建立房間</h2>
+          <input type="text" id="input-host-nickname" placeholder="輸入你的暱稱" maxlength="10" autocomplete="off">
+          <button id="btn-create" class="btn btn-primary">🏠 建立房間</button>
+        </div>
+
+        <div class="divider-or"><span>或</span></div>
+
+        <div id="join-section" class="action-card join-card">
+          <h2>加入房間</h2>
+          <input type="text" id="input-nickname" placeholder="輸入你的暱稱" maxlength="10" autocomplete="off">
+          <input type="text" id="input-room-code" placeholder="房間碼（6碼）" maxlength="6" autocomplete="off" style="text-transform:uppercase">
+          <button id="btn-join" class="btn btn-secondary">🚪 加入房間</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- 等待室 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-lobby" class="screen">
+    <div class="container">
+      <h2 class="section-title">等待室</h2>
+
+      <div class="invite-box">
+        <p>房間碼：<strong id="lobby-room-code" class="room-code-display"></strong></p>
+        <div class="invite-url-row">
+          <span id="lobby-invite-url" class="invite-url-text"></span>
+          <button id="btn-copy-invite" class="btn btn-sm">📋 複製</button>
+        </div>
+      </div>
+
+      <div class="player-count-bar">
+        <span>玩家</span>
+        <span id="player-count" class="count-badge">0 / 8</span>
+      </div>
+
+      <div id="player-list" class="player-list"></div>
+
+      <button id="btn-start-game" class="btn btn-primary btn-lg" disabled>🎮 開始遊戲</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- 查看詞牌 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-word-reveal" class="screen">
+    <div class="container">
+      <h2 class="section-title">查看你的詞牌</h2>
+      <p id="word-spy-count" class="spy-count-info"></p>
+
+      <div id="word-card" class="word-card">
+        <div class="word-card-inner">
+          <div class="word-card-front">
+            <div class="card-question">❓</div>
+            <p>點擊翻牌</p>
+          </div>
+          <div class="word-card-back">
+            <p id="word-role" class="word-role"></p>
+            <p id="word-category" class="word-category"></p>
+            <h2 id="word-text" class="word-text"></h2>
+          </div>
+        </div>
+      </div>
+
+      <p class="word-hint">⚠️ 請不要讓其他人看到你的詞！</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- 發言階段 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-speaking" class="screen">
+    <div class="container">
+      <div class="speaking-header">
+        <h2 id="speaking-current" class="speaking-turn"></h2>
+        <div class="speaking-meta">
+          <span id="speaking-round"></span>
+          <span>•</span>
+          <span id="speaking-progress"></span>
+        </div>
+      </div>
+
+      <div class="timer-ring">
+        <svg viewBox="0 0 100 100">
+          <circle class="timer-bg" cx="50" cy="50" r="45"/>
+          <circle id="timer-circle" class="timer-progress" cx="50" cy="50" r="45"
+            stroke-dasharray="282.74" stroke-dashoffset="0"/>
+        </svg>
+        <span id="timer-value" class="timer-value">30</span>
+      </div>
+
+      <p id="my-word-reminder" class="my-word-reminder"></p>
+
+      <button id="btn-done-speaking" class="btn btn-primary">✅ 發言完畢</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- 投票階段 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-voting" class="screen">
+    <div class="container">
+      <h2 class="section-title">🗳️ 投票淘汰</h2>
+
+      <div class="timer-ring small">
+        <svg viewBox="0 0 100 100">
+          <circle class="timer-bg" cx="50" cy="50" r="45"/>
+          <circle id="vote-timer-circle" class="timer-progress" cx="50" cy="50" r="45"
+            stroke-dasharray="282.74" stroke-dashoffset="0"/>
+        </svg>
+        <span id="vote-timer-value" class="timer-value">15</span>
+      </div>
+
+      <p id="vote-progress-text" class="vote-progress"></p>
+
+      <div id="vote-player-list" class="vote-player-list"></div>
+
+      <button id="btn-confirm-vote" class="btn btn-primary">確認投票</button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- 投票結果 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-vote-result" class="screen">
+    <div class="container">
+      <h2 class="section-title">📊 投票結果</h2>
+      <div id="vote-result-content"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ -->
+  <!-- 遊戲結果 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-game-over" class="screen">
+    <div class="container">
+      <div id="game-over-content"></div>
+      <div class="game-over-actions">
+        <button id="btn-play-again" class="btn btn-primary">🔄 再來一局</button>
+        <button id="btn-back-home" class="btn btn-secondary">🏠 回首頁</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
