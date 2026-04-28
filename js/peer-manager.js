@@ -71,12 +71,12 @@ export class PeerManager {
     await this._createPeer(); // random ID
 
     const hostPeerId = PeerManager.roomCodeToPeerId(roomCode);
-    const conn = this.peer.connect(hostPeerId, { reliable: true });
+    const conn = this.peer.connect(hostPeerId, { reliable: true, serialization: 'json' });
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('連線逾時，請確認房間碼是否正確'));
-      }, 10000);
+        reject(new Error('連線逾時，請確認房間碼是否正確，或房主已離開'));
+      }, 15000);
 
       conn.on('open', () => {
         clearTimeout(timeout);
@@ -90,7 +90,8 @@ export class PeerManager {
 
       conn.on('error', (err) => {
         clearTimeout(timeout);
-        reject(err);
+        console.error('[Client] Join error:', err);
+        reject(new Error('無法連線到房間：' + (err.message || '連線被拒絕')));
       });
     });
   }
@@ -100,10 +101,30 @@ export class PeerManager {
     return new Promise((resolve, reject) => {
       const opts = {
         debug: 1,
+        secure: true,
         config: {
           iceServers: [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' },
+            { urls: 'stun:global.stun.twilio.com:3478' },
+            {
+              urls: 'turn:openrelay.metered.ca:80',
+              username: 'openrelayproject',
+              credential: 'openrelayproject',
+            },
+            {
+              urls: 'turn:openrelay.metered.ca:443',
+              username: 'openrelayproject',
+              credential: 'openrelayproject',
+            },
+            {
+              urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+              username: 'openrelayproject',
+              credential: 'openrelayproject',
+            },
           ],
         },
       };

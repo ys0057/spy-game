@@ -93,6 +93,9 @@ class App {
       this.ui.hideLoading();
       this.ui.showLobby(roomCode, this.pm.getInviteUrl(), true);
 
+      // 更新 URL hash 以便分享
+      window.location.hash = roomCode;
+
       // 非阻塞初始化語音
       this._initVoice();
 
@@ -193,6 +196,14 @@ class App {
       this.ui.showWordReveal(data.role, data.word, data.category, data.spyCount);
     });
 
+    this.engine.on('think-timer', ({ timeLeft }) => {
+      const el = document.getElementById('think-countdown');
+      if (el) {
+        el.textContent = timeLeft > 0 ? `思考時間：${timeLeft} 秒` : '發言即將開始...';
+        if (timeLeft <= 3) el.style.color = 'var(--red)';
+      }
+    });
+
     this.engine.on('turn-update', (data) => {
       this.ui.showSpeaking(data, this.myNickname);
       this._setupDoneSpeakingBtn(true);
@@ -258,6 +269,15 @@ class App {
           this.ui._myRole = data.role;
           this.ui._myWord = data.word;
           break;
+
+        case 'THINK_TIMER': {
+          const el = document.getElementById('think-countdown');
+          if (el) {
+            el.textContent = data.timeLeft > 0 ? `思考時間：${data.timeLeft} 秒` : '發言即將開始...';
+            if (data.timeLeft <= 3) el.style.color = 'var(--red)';
+          }
+          break;
+        }
 
         case 'TURN_UPDATE':
           this.ui.showSpeaking(data, this.myNickname);

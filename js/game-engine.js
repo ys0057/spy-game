@@ -79,7 +79,18 @@ export class GameEngine {
       if (p.isHost) this.emit('game-start-self', data);
       else this.pm.sendToPlayer(p.peerId, data);
     });
-    setTimeout(() => this._startSpeakingPhase(), 6000);
+
+    // 15 秒思考倒數
+    let thinkTime = 15;
+    const thinkTimer = setInterval(() => {
+      thinkTime--;
+      this.pm.broadcast({ type: 'THINK_TIMER', timeLeft: thinkTime });
+      this.emit('think-timer', { timeLeft: thinkTime });
+      if (thinkTime <= 0) {
+        clearInterval(thinkTimer);
+        this._startSpeakingPhase();
+      }
+    }, 1000);
   }
 
   _startSpeakingPhase() {
