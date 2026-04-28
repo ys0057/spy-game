@@ -1,4 +1,4 @@
-import { getRandomWordPair } from './word-bank.js';
+import { WORD_BANK, getRandomWordPair } from './word-bank.js';
 
 export class GameEngine {
   constructor(peerManager) {
@@ -13,7 +13,7 @@ export class GameEngine {
       currentRound: 1,
       totalRoundsBeforeVote: 2,
       speakingTime: 30,
-      votingTime: 15,
+      votingTime: 30,
       timer: null,
       timeLeft: 0,
       votes: {},
@@ -51,9 +51,54 @@ export class GameEngine {
     this.emit('player-removed', { nickname: player.nickname });
   }
 
+  // ── 開始遊戲：先進行主題投票 ──
   startGame() {
     if (this.state.players.length < 3) return;
-    this.state.wordPair = getRandomWordPair();
+    this.state.phase = 'topicVote';
+    this.state.topicCandidates = this._pickTopicCandidates(3);
+    this.state.topicVotes = {};
+    // 5人以上只進行一輪發言
+    this.state.totalRoundsBeforeVote = this.state.players.length >= 5 ? 1 : 2;
+
+    const topics = this.state.topicCandidates.map(t => t.category);
+    const data = { type: 'TOPIC_VOTE_START', topics, timeLeft: 15 };
+    this.pm.broadcast(data);
+    this.emit('topic-vote-start', data);
+    this._startTimer(15, () => this._endTopicVote());
+  }
+
+  handleTopicVote(peerId, topicIndex) {
+    if (this.state.phase !== 'topicVote') return;
+    if (this.state.topicVotes[peerId] !== undefined) return;
+    this.state.topicVotes[peerId] = topicIndex;
+    const votedCount = Object.keys(this.state.topicVotes).length;
+    const totalCount = this.state.players.length;
+    this.pm.broadcast({ type: 'TOPIC_VOTE_PROGRESS', votedCount, totalCount });
+    this.emit('topic-vote-progress', { votedCount, totalCount });
+    if (votedCount >= totalCount) {
+      this._clearTimer();
+      setTimeout(() => this._endTopicVote(), 500);
+    }
+  }
+
+  _endTopicVote() {
+    this._clearTimer();
+    const counts = [0, 0, 0];
+    Object.values(this.state.topicVotes).forEach(idx => {
+      if (idx >= 0 && idx < 3) counts[idx]++;
+    });
+    const maxCount = Math.max(...counts);
+    const winners = counts.map((c, i) => c === maxCount ? i : -1).filter(i => i !== -1);
+    const winnerIdx = winners[Math.floor(Math.random() * winners.length)];
+    const chosenPair = this.state.topicCandidates[winnerIdx];
+    const resultData = { type: 'TOPIC_VOTE_RESULT', winnerIndex: winnerIdx, category: chosenPair.category, counts };
+    this.pm.broadcast(resultData);
+    this.emit('topic-vote-result', resultData);
+    setTimeout(() => this._beginGameWithPair(chosenPair), 3000);
+  }
+
+  _beginGameWithPair(pair) {
+    this.state.wordPair = pair;
     this.state.phase = 'wordReveal';
     const n = this.state.players.length;
     let spyCount = n <= 4 ? 1 : n <= 6 ? (Math.random() < 0.5 ? 1 : 2) : 2;
@@ -74,6 +119,7 @@ export class GameEngine {
       const data = {
         type: 'GAME_START', role: p.role, word: p.word, peerIds, spyCount,
         category: this.state.wordPair.category,
+        rounds: this.state.totalRoundsBeforeVote,
         speakingOrder: this.state.speakingOrder.map(idx => this.state.players[idx].nickname),
       };
       if (p.isHost) this.emit('game-start-self', data);
@@ -91,6 +137,21 @@ export class GameEngine {
         this._startSpeakingPhase();
       }
     }, 1000);
+  }
+
+  _pickTopicCandidates(count) {
+    const all = [...WORD_BANK];
+    this._shuffle(all);
+    const picks = [];
+    const usedCats = new Set();
+    for (const [w1, w2, cat] of all) {
+      if (usedCats.has(cat)) continue;
+      usedCats.add(cat);
+      const swap = Math.random() < 0.5;
+      picks.push({ civilian: swap ? w2 : w1, spy: swap ? w1 : w2, category: cat });
+      if (picks.length >= count) break;
+    }
+    return picks;
   }
 
   _startSpeakingPhase() {
@@ -211,7 +272,7 @@ export class GameEngine {
     this.pm.broadcast(resultData);
     this.emit('vote-result', resultData);
     if (gameOver) setTimeout(() => this._showGameOver(gameOver), 3000);
-    else setTimeout(() => { this.state.currentRound = 1; this._startSpeakingPhase(); }, 5000);
+    else setTimeout(() => { this.state.currentRound = 1; this._startSpeakingPhase(); }, 20000);
   }
 
   _checkWinCondition() {

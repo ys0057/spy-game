@@ -118,6 +118,28 @@
   </section>
 
   <!-- ═══════════════════════════════ -->
+  <!-- 主題投票 -->
+  <!-- ═══════════════════════════════ -->
+  <section id="screen-topic-vote" class="screen">
+    <div class="container">
+      <h2 class="section-title">🎯 選擇主題</h2>
+      <p class="topic-vote-desc">投票選擇本局遊戲主題</p>
+
+      <div class="timer-ring small">
+        <svg viewBox="0 0 100 100">
+          <circle class="timer-bg" cx="50" cy="50" r="45"/>
+          <circle id="topic-timer-circle" class="timer-progress" cx="50" cy="50" r="45"
+            stroke-dasharray="282.74" stroke-dashoffset="0"/>
+        </svg>
+        <span id="topic-timer-value" class="timer-value">15</span>
+      </div>
+
+      <div id="topic-cards" class="topic-cards"></div>
+      <p id="topic-vote-progress" class="vote-progress">等待投票中...</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════ -->
   <!-- 查看詞牌 -->
   <!-- ═══════════════════════════════ -->
   <section id="screen-word-reveal" class="screen">
@@ -149,6 +171,7 @@
   <!-- ═══════════════════════════════ -->
   <section id="screen-speaking" class="screen">
     <div class="container">
+      <div class="game-hint-bar"></div>
       <div class="speaking-header">
         <h2 id="speaking-current" class="speaking-turn"></h2>
         <div class="speaking-meta">
@@ -178,6 +201,7 @@
   <!-- ═══════════════════════════════ -->
   <section id="screen-voting" class="screen">
     <div class="container">
+      <div class="game-hint-bar"></div>
       <h2 class="section-title">🗳️ 投票淘汰</h2>
 
       <div class="timer-ring small">
@@ -186,7 +210,7 @@
           <circle id="vote-timer-circle" class="timer-progress" cx="50" cy="50" r="45"
             stroke-dasharray="282.74" stroke-dashoffset="0"/>
         </svg>
-        <span id="vote-timer-value" class="timer-value">15</span>
+        <span id="vote-timer-value" class="timer-value">30</span>
       </div>
 
       <p id="vote-progress-text" class="vote-progress"></p>
@@ -202,6 +226,7 @@
   <!-- ═══════════════════════════════ -->
   <section id="screen-vote-result" class="screen">
     <div class="container">
+      <div class="game-hint-bar"></div>
       <h2 class="section-title">📊 投票結果</h2>
       <div id="vote-result-content"></div>
     </div>

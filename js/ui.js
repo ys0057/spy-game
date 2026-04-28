@@ -93,6 +93,52 @@ export class UI {
     this.showScreen('word-reveal');
   }
 
+  // ── 主題投票 ──
+  showTopicVote(topics, onVote) {
+    const container = document.getElementById('topic-cards');
+    container.innerHTML = '';
+    const emojis = ['🎲', '🎨', '🌟'];
+    let selected = null;
+    topics.forEach((topic, i) => {
+      const card = document.createElement('div');
+      card.className = 'topic-card';
+      card.innerHTML = `<span class="topic-emoji">${emojis[i]}</span><span class="topic-name">${topic}</span>`;
+      card.onclick = () => {
+        container.querySelectorAll('.topic-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selected = i;
+        onVote(i);
+      };
+      container.appendChild(card);
+    });
+    document.getElementById('topic-vote-progress').textContent = '等待投票中...';
+    this.showScreen('topic-vote');
+  }
+
+  updateTopicVoteProgress(votedCount, totalCount) {
+    document.getElementById('topic-vote-progress').textContent = `已投票：${votedCount} / ${totalCount}`;
+  }
+
+  showTopicVoteResult(winnerIndex, category) {
+    const cards = document.querySelectorAll('.topic-card');
+    cards.forEach((c, i) => {
+      if (i === winnerIndex) {
+        c.classList.add('selected');
+        c.innerHTML += '<div style="margin-top:8px;color:var(--green);font-weight:700">✅ 當選！</div>';
+      } else {
+        c.style.opacity = '0.4';
+        c.style.pointerEvents = 'none';
+      }
+    });
+  }
+
+  setGameHint(category) {
+    this._gameHint = category;
+    document.querySelectorAll('.game-hint-bar').forEach(bar => {
+      bar.textContent = `💡 遊戲提示：${category}`;
+    });
+  }
+
   // ── 發言階段 ──
   showSpeaking(data, myNickname) {
     const isMyTurn = data.currentSpeaker === myNickname;
@@ -109,23 +155,24 @@ export class UI {
   }
 
   updateTimer(timeLeft) {
-    // Speaking timer
-    const speakTimer = document.getElementById('timer-value');
-    const voteTimer = document.getElementById('vote-timer-value');
-    const activeTimer = this.currentScreen === 'voting' ? voteTimer : speakTimer;
-    if (activeTimer) {
-      activeTimer.textContent = timeLeft;
-      activeTimer.className = timeLeft <= 5 ? 'timer-value urgent' : 'timer-value';
+    // 判斷當前畫面使用哪組 timer
+    const timerMap = {
+      'topic-vote': { value: 'topic-timer-value', circle: 'topic-timer-circle', total: 15 },
+      'speaking': { value: 'timer-value', circle: 'timer-circle', total: 30 },
+      'voting': { value: 'vote-timer-value', circle: 'vote-timer-circle', total: 30 },
+    };
+    const cfg = timerMap[this.currentScreen];
+    if (!cfg) return;
+    const timerEl = document.getElementById(cfg.value);
+    if (timerEl) {
+      timerEl.textContent = timeLeft;
+      timerEl.className = timeLeft <= 5 ? 'timer-value urgent' : 'timer-value';
     }
-    // 更新圓環
-    const speakCircle = document.getElementById('timer-circle');
-    const voteCircle = document.getElementById('vote-timer-circle');
-    const activeCircle = this.currentScreen === 'voting' ? voteCircle : speakCircle;
-    if (activeCircle) {
-      const total = this.currentScreen === 'voting' ? 15 : 30;
-      const pct = timeLeft / total;
+    const circleEl = document.getElementById(cfg.circle);
+    if (circleEl) {
+      const pct = timeLeft / cfg.total;
       const circumference = 2 * Math.PI * 45;
-      activeCircle.style.strokeDashoffset = circumference * (1 - pct);
+      circleEl.style.strokeDashoffset = circumference * (1 - pct);
     }
   }
 

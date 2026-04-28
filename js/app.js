@@ -178,6 +178,9 @@ class App {
         case 'VOTE':
           this.engine.handleVote(data.fromPeerId, data.targetPeerId);
           break;
+        case 'TOPIC_VOTE':
+          this.engine.handleTopicVote(data.fromPeerId, data.topicIndex);
+          break;
         case 'CHAT_MSG':
           this.engine.handleChat(data.fromPeerId, data.text);
           break;
@@ -190,9 +193,25 @@ class App {
       this.ui.updatePlayerList(players);
     });
 
+    // 主題投票事件
+    this.engine.on('topic-vote-start', (data) => {
+      this.ui.showTopicVote(data.topics, (topicIndex) => {
+        this.engine.handleTopicVote(this.myPeerId, topicIndex);
+      });
+    });
+
+    this.engine.on('topic-vote-progress', (data) => {
+      this.ui.updateTopicVoteProgress(data.votedCount, data.totalCount);
+    });
+
+    this.engine.on('topic-vote-result', (data) => {
+      this.ui.showTopicVoteResult(data.winnerIndex, data.category);
+    });
+
     this.engine.on('game-start-self', (data) => {
       // Host 自己的遊戲開始
       this._connectAudioMesh(data.peerIds);
+      this.ui.setGameHint(data.category);
       this.ui.showWordReveal(data.role, data.word, data.category, data.spyCount);
     });
 
@@ -262,9 +281,24 @@ class App {
           this.ui.updatePlayerList(data.players);
           break;
 
+        case 'TOPIC_VOTE_START':
+          this.ui.showTopicVote(data.topics, (topicIndex) => {
+            this.pm.sendToHost({ type: 'TOPIC_VOTE', topicIndex });
+          });
+          break;
+
+        case 'TOPIC_VOTE_PROGRESS':
+          this.ui.updateTopicVoteProgress(data.votedCount, data.totalCount);
+          break;
+
+        case 'TOPIC_VOTE_RESULT':
+          this.ui.showTopicVoteResult(data.winnerIndex, data.category);
+          break;
+
         case 'GAME_START':
           this._connectAudioMesh(data.peerIds);
           if (this.vc) this.vc.playSfx('start');
+          this.ui.setGameHint(data.category);
           this.ui.showWordReveal(data.role, data.word, data.category, data.spyCount);
           this.ui._myRole = data.role;
           this.ui._myWord = data.word;
