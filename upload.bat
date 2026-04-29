@@ -1,6 +1,0 @@
-@echo off
-cd /d "c:\Users\user\Desktop\workspace\spy-game"
-git add .
-git commit -m "feat: topic vote, dynamic rounds, 30s vote, 20s result"
-git push origin main
-pause
