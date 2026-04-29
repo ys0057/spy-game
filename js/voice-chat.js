@@ -286,6 +286,14 @@ export class VoiceChat {
         osc.start(ctx.currentTime);
         osc.stop(ctx.currentTime + 0.6);
         break;
+      case 'turn':
+        osc.frequency.value = 600;
+        osc.type = 'sine';
+        osc.frequency.linearRampToValueAtTime(800, ctx.currentTime + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+        break;
       case 'win':
         osc.frequency.value = 523;
         osc.type = 'sine';

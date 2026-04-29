@@ -341,6 +341,26 @@ input[type="range"]::-webkit-slider-thumb {
 }
 .toast.show { opacity: 1; transform: translateY(0); }
 
+/* ── Your Turn Overlay ── */
+.your-turn-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity .3s;
+}
+.your-turn-overlay.show { opacity: 1; pointer-events: all; }
+.your-turn-content {
+  font-size: 3rem; font-weight: 900; color: #fff;
+  text-shadow: 0 0 30px var(--cyan), 0 0 60px var(--purple);
+  transform: scale(0.5); transition: transform .4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.your-turn-overlay.show .your-turn-content { transform: scale(1); animation: shake 0.5s ease-in-out 0.4s; }
+@keyframes shake {
+  0%, 100% { transform: scale(1) translateX(0); }
+  25% { transform: scale(1) translateX(-10px) rotate(-5deg); }
+  50% { transform: scale(1) translateX(10px) rotate(5deg); }
+  75% { transform: scale(1) translateX(-10px) rotate(-5deg); }
+}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

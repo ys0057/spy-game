@@ -152,13 +152,21 @@ export class UI {
     document.getElementById('btn-done-speaking').disabled = false;
     document.getElementById('my-word-reminder').textContent = `我的詞：${this._myWord}`;
     this.showScreen('speaking');
+
+    if (isMyTurn) {
+      const overlay = document.getElementById('your-turn-overlay');
+      if (overlay) {
+        overlay.classList.add('show');
+        setTimeout(() => overlay.classList.remove('show'), 2000);
+      }
+    }
   }
 
   updateTimer(timeLeft) {
     // 判斷當前畫面使用哪組 timer
     const timerMap = {
       'topic-vote': { value: 'topic-timer-value', circle: 'topic-timer-circle', total: 15 },
-      'speaking': { value: 'timer-value', circle: 'timer-circle', total: 30 },
+      'speaking': { value: 'timer-value', circle: 'timer-circle', total: 15 },
       'voting': { value: 'vote-timer-value', circle: 'vote-timer-circle', total: 30 },
     };
     const cfg = timerMap[this.currentScreen];

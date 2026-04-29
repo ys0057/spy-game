@@ -224,6 +224,9 @@ class App {
     });
 
     this.engine.on('turn-update', (data) => {
+      if (data.currentSpeaker === this.myNickname && this.vc) {
+        this.vc.playSfx('turn');
+      }
       this.ui.showSpeaking(data, this.myNickname);
       this._setupDoneSpeakingBtn(true);
     });
@@ -314,6 +317,9 @@ class App {
         }
 
         case 'TURN_UPDATE':
+          if (data.currentSpeaker === this.myNickname && this.vc) {
+            this.vc.playSfx('turn');
+          }
           this.ui.showSpeaking(data, this.myNickname);
           this._setupDoneSpeakingBtn(false);
           break;

@@ -12,12 +12,14 @@ export class GameEngine {
       currentSpeakerIndex: 0,
       currentRound: 1,
       totalRoundsBeforeVote: 2,
-      speakingTime: 30,
+      speakingTime: 15,
       votingTime: 30,
       timer: null,
       timeLeft: 0,
       votes: {},
       chatLog: [],
+      isPkRound: false,
+      pkPlayers: null,
     };
   }
 
@@ -157,8 +159,28 @@ export class GameEngine {
   _startSpeakingPhase() {
     this.state.phase = 'speaking';
     this.state.currentSpeakerIndex = 0;
+    this.state.isPkRound = false;
+    this.state.pkPlayers = null;
+    this.state.totalRoundsBeforeVote = this.state.players.length >= 5 ? 1 : 2;
     this._generateSpeakingOrder();
     this.state.players.forEach(p => { p.doneSpeaking = false; });
+    this._startCurrentSpeakerTurn();
+  }
+
+  _startPkPhase() {
+    this.state.phase = 'speaking';
+    this.state.currentSpeakerIndex = 0;
+    this.state.totalRoundsBeforeVote = 1;
+    this.state.currentRound = 1;
+    
+    const pkIndices = this.state.pkPlayers
+      .map(pid => this.state.players.findIndex(p => p.peerId === pid))
+      .filter(i => i !== -1);
+    this._shuffle(pkIndices);
+    this.state.speakingOrder = pkIndices;
+    
+    this.state.players.forEach(p => { p.doneSpeaking = false; });
+    this._broadcastSystemChat('⚠️ 平票！進入 PK 發言階段，請平票玩家進行一對一論述 ⚠️');
     this._startCurrentSpeakerTurn();
   }
 
@@ -214,8 +236,18 @@ export class GameEngine {
     this.state.phase = 'voting';
     this.state.votes = {};
     this.state.players.forEach(p => { p.hasVoted = false; p.votedFor = null; });
-    const alivePlayers = this.state.players.filter(p => p.isAlive)
-      .map(p => ({ peerId: p.peerId, nickname: p.nickname }));
+    
+    let alivePlayers;
+    if (this.state.isPkRound) {
+      alivePlayers = this.state.players
+        .filter(p => this.state.pkPlayers.includes(p.peerId))
+        .map(p => ({ peerId: p.peerId, nickname: p.nickname }));
+    } else {
+      alivePlayers = this.state.players
+        .filter(p => p.isAlive)
+        .map(p => ({ peerId: p.peerId, nickname: p.nickname }));
+    }
+    
     const voteData = { type: 'VOTE_START', alivePlayers, timeLeft: this.state.votingTime };
     this.pm.broadcast(voteData);
     this.emit('vote-start', voteData);
@@ -271,8 +303,21 @@ export class GameEngine {
     };
     this.pm.broadcast(resultData);
     this.emit('vote-result', resultData);
-    if (gameOver) setTimeout(() => this._showGameOver(gameOver), 3000);
-    else setTimeout(() => { this.state.currentRound = 1; this._startSpeakingPhase(); }, 20000);
+    
+    if (gameOver) {
+      setTimeout(() => this._showGameOver(gameOver), 3000);
+    } else {
+      setTimeout(() => {
+        if (isTie && maxPlayers.length >= 2 && !this.state.isPkRound) {
+          this.state.isPkRound = true;
+          this.state.pkPlayers = maxPlayers;
+          this._startPkPhase();
+        } else {
+          this.state.currentRound = 1;
+          this._startSpeakingPhase();
+        }
+      }, 20000);
+    }
   }
 
   _checkWinCondition() {
