@@ -148,6 +148,16 @@ export class UI {
     document.getElementById('speaking-round').textContent = `第 ${data.round} / ${data.totalRounds} 輪`;
     document.getElementById('speaking-progress').textContent =
       `發言者 ${data.speakerIndex + 1} / ${data.totalSpeakers}`;
+    
+    const nextEl = document.getElementById('speaking-next');
+    if (nextEl) {
+      if (data.nextSpeaker) {
+        nextEl.textContent = `▶ 下一位：${data.nextSpeaker}`;
+      } else {
+        nextEl.textContent = '▶ 本輪最後一位發言';
+      }
+    }
+
     document.getElementById('btn-done-speaking').style.display = isMyTurn ? '' : 'none';
     document.getElementById('btn-done-speaking').disabled = false;
     document.getElementById('my-word-reminder').textContent = `我的詞：${this._myWord}`;
@@ -168,6 +178,7 @@ export class UI {
       'topic-vote': { value: 'topic-timer-value', circle: 'topic-timer-circle', total: 15 },
       'speaking': { value: 'timer-value', circle: 'timer-circle', total: 25 },
       'voting': { value: 'vote-timer-value', circle: 'vote-timer-circle', total: 30 },
+      'vote-result': { value: 'discussion-timer-value', circle: 'discussion-timer-circle', total: 20 },
     };
     const cfg = timerMap[this.currentScreen];
     if (!cfg) return;

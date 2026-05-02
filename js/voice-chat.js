@@ -41,14 +41,22 @@ export class VoiceChat {
   // ── 初始化麥克風 ──
   async initMicrophone() {
     try {
-      this.localStream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
-        video: false,
-      });
+      try {
+        this.localStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+          video: false,
+        });
+      } catch (err) {
+        console.warn('[Voice] Strict mic constraints failed, trying fallback. Error:', err);
+        this.localStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false,
+        });
+      }
 
       // 建立 AudioContext 用於音量控制和說話偵測
       this.audioContext = new (window.AudioContext ||

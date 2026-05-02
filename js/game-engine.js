@@ -204,9 +204,17 @@ export class GameEngine {
       return;
     }
     this.state.timeLeft = this.state.speakingTime;
+    
+    let nextSpeakerName = null;
+    const nextIdx = this.state.speakingOrder[this.state.currentSpeakerIndex + 1];
+    if (nextIdx !== undefined) {
+      const nextP = this.state.players[nextIdx];
+      if (nextP) nextSpeakerName = nextP.nickname;
+    }
+
     const turnData = {
       type: 'TURN_UPDATE', phase: 'speaking', currentSpeaker: speaker.nickname,
-      currentSpeakerPeerId: speaker.peerId, round: this.state.currentRound,
+      nextSpeaker: nextSpeakerName, currentSpeakerPeerId: speaker.peerId, round: this.state.currentRound,
       totalRounds: this.state.totalRoundsBeforeVote, timeLeft: this.state.timeLeft,
       speakerIndex: this.state.currentSpeakerIndex, totalSpeakers: this.state.speakingOrder.length,
     };
@@ -307,7 +315,8 @@ export class GameEngine {
     if (gameOver) {
       setTimeout(() => this._showGameOver(gameOver), 3000);
     } else {
-      setTimeout(() => {
+      // 進入 20 秒討論倒數
+      this._startTimer(20, () => {
         if (isTie && maxPlayers.length >= 2 && !this.state.isPkRound) {
           this.state.isPkRound = true;
           this.state.pkPlayers = maxPlayers;
@@ -316,7 +325,7 @@ export class GameEngine {
           this.state.currentRound = 1;
           this._startSpeakingPhase();
         }
-      }, 20000);
+      });
     }
   }
 

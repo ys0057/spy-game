@@ -179,6 +179,7 @@
           <span>•</span>
           <span id="speaking-progress"></span>
         </div>
+        <p id="speaking-next" class="speaking-next" style="margin-top: 8px; color: var(--text2); font-size: 0.9rem;"></p>
       </div>
 
       <div class="timer-ring">
@@ -228,6 +229,15 @@
     <div class="container">
       <div class="game-hint-bar"></div>
       <h2 class="section-title">📊 投票結果</h2>
+      <p class="vote-progress" style="margin-top:-10px;">討論時間</p>
+      <div class="timer-ring small">
+        <svg viewBox="0 0 100 100">
+          <circle class="timer-bg" cx="50" cy="50" r="45"/>
+          <circle id="discussion-timer-circle" class="timer-progress" cx="50" cy="50" r="45"
+            stroke-dasharray="282.74" stroke-dashoffset="0"/>
+        </svg>
+        <span id="discussion-timer-value" class="timer-value">20</span>
+      </div>
       <div id="vote-result-content"></div>
     </div>
   </section>
