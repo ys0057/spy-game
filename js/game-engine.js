@@ -12,7 +12,7 @@ export class GameEngine {
       currentSpeakerIndex: 0,
       currentRound: 1,
       totalRoundsBeforeVote: 2,
-      speakingTime: 15,
+      speakingTime: 25,
       votingTime: 30,
       timer: null,
       timeLeft: 0,

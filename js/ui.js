@@ -166,7 +166,7 @@ export class UI {
     // 判斷當前畫面使用哪組 timer
     const timerMap = {
       'topic-vote': { value: 'topic-timer-value', circle: 'topic-timer-circle', total: 15 },
-      'speaking': { value: 'timer-value', circle: 'timer-circle', total: 15 },
+      'speaking': { value: 'timer-value', circle: 'timer-circle', total: 25 },
       'voting': { value: 'vote-timer-value', circle: 'vote-timer-circle', total: 30 },
     };
     const cfg = timerMap[this.currentScreen];
